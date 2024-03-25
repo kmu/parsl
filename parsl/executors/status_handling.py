@@ -124,7 +124,6 @@ class BlockProviderExecutor(ParslExecutor):
             status = self._make_status_dict(block_ids, self._provider.status(job_ids))
         else:
             status = {}
-        status.update(self._simulated_status)
 
         return status
 
@@ -133,6 +132,7 @@ class BlockProviderExecutor(ParslExecutor):
         if self._should_poll(now):
             self._poller_mutable_status = self._old_status_impl()
             self._last_poll_time = now
+        self._poller_mutable_status.update(self._simulated_status)
         return self._poller_mutable_status
 
     def set_bad_state_and_fail_all(self, exception: Exception):
