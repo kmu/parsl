@@ -22,7 +22,6 @@ class PolledExecutorFacade:
         self._dfk = dfk
         self._interval = executor.status_polling_interval
         self._last_poll_time = 0.0
-        self._status = {}  # type: Dict[str, JobStatus]
         self.first = True
 
         # Create a ZMQ channel to send poll status to monitoring
@@ -42,14 +41,14 @@ class PolledExecutorFacade:
 
     def poll(self, now: float) -> None:
         if self._should_poll(now):
-            previous_status = self._status
-            self._status = self._executor.status()
+            previous_status = self.executor._poller_mutable_status
+            self.executor._poller_mutable_status = self._executor.status()
             self._last_poll_time = now
             delta_status = {}
-            for block_id in self._status:
+            for block_id in self.executor._poller_mutable_status:
                 if block_id not in previous_status \
-                   or previous_status[block_id].state != self._status[block_id].state:
-                    delta_status[block_id] = self._status[block_id]
+                   or previous_status[block_id].state != self.executor._poller_mutable_status[block_id].state:
+                    delta_status[block_id] = self.executor._poller_mutable_status[block_id]
 
             if delta_status:
                 self.send_monitoring_info(delta_status)
@@ -67,7 +66,7 @@ class PolledExecutorFacade:
 
         :return: a dictionary mapping block ids (in string) to job status
         """
-        return self._status
+        return self.executor._poller_mutable_status
 
     @property
     def executor(self) -> BlockProviderExecutor:
@@ -88,7 +87,7 @@ class PolledExecutorFacade:
             new_status = {}
             for block_id in block_ids:
                 new_status[block_id] = JobStatus(JobState.CANCELLED)
-                del self._status[block_id]
+                del self.executor._poller_mutable_status[block_id]
             self.send_monitoring_info(new_status)
         return block_ids
 
@@ -99,11 +98,11 @@ class PolledExecutorFacade:
             for block_id in block_ids:
                 new_status[block_id] = JobStatus(JobState.PENDING)
             self.send_monitoring_info(new_status)
-            self._status.update(new_status)
+            self.executor._poller_mutable_status.update(new_status)
         return block_ids
 
     def __repr__(self) -> str:
-        return self._status.__repr__()
+        return self.executor._poller_mutable_status.__repr__()
 
 
 class JobStatusPoller(Timer):

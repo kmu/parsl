@@ -62,6 +62,8 @@ class BlockProviderExecutor(ParslExecutor):
         # to keep track of such errors so that they can be handled in one place
         # together with errors reported by status()
         self._simulated_status: Dict[str, JobStatus] = {}
+        self._poller_mutable_status: Dict[str, JobStatus] = {}
+
         self._executor_bad_state = threading.Event()
         self._executor_exception: Optional[Exception] = None
 
