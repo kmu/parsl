@@ -1020,25 +1020,6 @@ class DataFlowKernel:
         executor = random.choice(choices)
         logger.debug("Task {} will be sent to executor {}".format(task_id, executor))
 
-        # The below uses func.__name__ before it has been wrapped by any staging code.
-
-        label = app_kwargs.get('label')
-        for kw in ['stdout', 'stderr']:
-            if kw in app_kwargs:
-                if app_kwargs[kw] == parsl.AUTO_LOGNAME:
-                    if kw not in ignore_for_cache:
-                        ignore_for_cache += [kw]
-                    app_kwargs[kw] = os.path.join(
-                                self.run_dir,
-                                'task_logs',
-                                str(int(task_id / 10000)).zfill(4),  # limit logs to 10k entries per directory
-                                'task_{}_{}{}.{}'.format(
-                                    str(task_id).zfill(4),
-                                    func.__name__,
-                                    '' if label is None else '_{}'.format(label),
-                                    kw)
-                    )
-
         resource_specification = app_kwargs.get('parsl_resource_specification', {})
 
         task_record: TaskRecord
@@ -1066,6 +1047,27 @@ class DataFlowKernel:
                        'resource_specification': resource_specification}
 
         self.update_task_state(task_record, States.unsched)
+
+        # The below uses func.__name__ before it has been wrapped by any staging code.
+
+        label = app_kwargs.get('label')
+        for kw in ['stdout', 'stderr']:
+            if kw in app_kwargs:
+                if app_kwargs[kw] == parsl.AUTO_LOGNAME:
+                    if kw not in ignore_for_cache:
+                        ignore_for_cache += [kw]
+                    if self.config.std_uri is None:
+                        app_kwargs[kw] = os.path.join(
+                                self.run_dir,
+                                'task_logs',
+                                str(int(task_id / 10000)).zfill(4),  # limit logs to 10k entries per directory
+                                'task_{}_{}{}.{}'.format(
+                                    str(task_id).zfill(4),
+                                    func.__name__,
+                                    '' if label is None else '_{}'.format(label),
+                                    kw))
+                    else:
+                        app_kwargs[kw] = self.config.std_uri(task_record, kw)
 
         app_fu = AppFuture(task_record)
 
