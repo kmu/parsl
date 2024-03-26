@@ -1,6 +1,5 @@
 import logging
 import parsl
-import time
 import zmq
 from typing import Dict, List, Sequence, Optional, Union
 
@@ -34,10 +33,10 @@ class PolledExecutorFacade:
             self.hub_channel.connect("tcp://{}:{}".format(hub_address, hub_port))
             logger.info("Monitoring enabled on job status poller")
 
-    def poll(self, now: float) -> None:
+    def poll(self) -> None:
         previous_status = self.executor._poller_mutable_status
 
-        self.executor._refresh_poll_mutable_status_if_time(now)
+        self.executor._refresh_poll_mutable_status_if_time()
 
         if previous_status != self.executor._poller_mutable_status:
             # short circuit the case where the two objects are identical so
@@ -124,9 +123,8 @@ class JobStatusPoller(Timer):
             es.executor.handle_errors(es.status)
 
     def _update_state(self) -> None:
-        now = time.time()
         for item in self._executor_facades:
-            item.poll(now)
+            item.poll()
 
     def add_executors(self, executors: Sequence[BlockProviderExecutor]) -> None:
         for executor in executors:
