@@ -34,9 +34,7 @@ class PolledExecutorFacade:
             logger.info("Monitoring enabled on job status poller")
 
     def poll(self) -> None:
-        previous_status = self.executor._poller_mutable_status
-
-        self.executor._refresh_poll_mutable_status_if_time()
+        previous_status = self.executor.status()
 
         if previous_status != self.executor._poller_mutable_status:
             # short circuit the case where the two objects are identical so
@@ -64,7 +62,7 @@ class PolledExecutorFacade:
 
         :return: a dictionary mapping block ids (in string) to job status
         """
-        return self.executor._poller_mutable_status
+        return self.executor.status()
 
     @property
     def executor(self) -> BlockProviderExecutor:
