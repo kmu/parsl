@@ -19,7 +19,6 @@ class PolledExecutorFacade:
     def __init__(self, executor: BlockProviderExecutor, dfk: Optional["parsl.dataflow.dflow.DataFlowKernel"] = None):
         self._executor = executor
         self._dfk = dfk
-        self.first = True
 
         # Create a ZMQ channel to send poll status to monitoring
         self.monitoring_enabled = False
