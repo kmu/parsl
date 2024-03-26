@@ -739,7 +739,7 @@ class HighThroughputExecutor(BlockProviderExecutor, RepresentationMixin):
 
         block_info: Dict[str, BlockInfo] = defaultdict(new_block_info)
 
-        for block_id, job_status in self._poller_mutable_status.items():
+        for block_id, job_status in self.status().items():
             if job_status.state not in TERMINAL_STATES:
                 # TODO: is there a nicer way to make block_info come into existence?
                 # can i write just the expression block_info[block_id] on its own?
