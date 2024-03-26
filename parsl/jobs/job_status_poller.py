@@ -37,9 +37,7 @@ class PolledExecutorFacade:
     def poll(self, now: float) -> None:
         previous_status = self.executor._poller_mutable_status
 
-        if self.executor._should_poll(now):
-            self.executor._poller_mutable_status = self._executor.status()
-            self.executor._last_poll_time = now
+        self.executor._refresh_poll_mutable_status_if_time(now)
 
         if previous_status != self.executor._poller_mutable_status:
             # short circuit the case where the two objects are identical so

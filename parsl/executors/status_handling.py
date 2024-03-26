@@ -241,3 +241,8 @@ class BlockProviderExecutor(ParslExecutor):
 
     def _should_poll(self, now: float) -> bool:
         return now >= self._last_poll_time + self.status_polling_interval
+
+    def _refresh_poll_mutable_status_if_time(self, now):
+        if self._should_poll(now):
+            self._poller_mutable_status = self.status()
+            self._last_poll_time = now
