@@ -73,6 +73,8 @@ class BlockProviderExecutor(ParslExecutor):
         self.blocks_to_job_id = {}  # type: Dict[str, str]
         self.job_ids_to_block = {}  # type: Dict[str, str]
 
+        self._last_poll_time = 0.0
+
     def _make_status_dict(self, block_ids: List[str], status_list: List[JobStatus]) -> Dict[str, JobStatus]:
         """Given a list of block ids and a list of corresponding status strings,
         returns a dictionary mapping each block id to the corresponding status
@@ -236,3 +238,6 @@ class BlockProviderExecutor(ParslExecutor):
     @abstractproperty
     def workers_per_node(self) -> Union[int, float]:
         pass
+
+    def _should_poll(self, now: float) -> bool:
+        return now >= self._last_poll_time + self.status_polling_interval

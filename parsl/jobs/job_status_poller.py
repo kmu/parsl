@@ -20,8 +20,6 @@ class PolledExecutorFacade:
     def __init__(self, executor: BlockProviderExecutor, dfk: Optional["parsl.dataflow.dflow.DataFlowKernel"] = None):
         self._executor = executor
         self._dfk = dfk
-        self._interval = executor.status_polling_interval
-        self._last_poll_time = 0.0
         self.first = True
 
         # Create a ZMQ channel to send poll status to monitoring
@@ -36,15 +34,12 @@ class PolledExecutorFacade:
             self.hub_channel.connect("tcp://{}:{}".format(hub_address, hub_port))
             logger.info("Monitoring enabled on job status poller")
 
-    def _should_poll(self, now: float) -> bool:
-        return now >= self._last_poll_time + self._interval
-
     def poll(self, now: float) -> None:
         previous_status = self.executor._poller_mutable_status
 
-        if self._should_poll(now):
+        if self.executor._should_poll(now):
             self.executor._poller_mutable_status = self._executor.status()
-            self._last_poll_time = now
+            self.executor._last_poll_time = now
 
         if previous_status != self.executor._poller_mutable_status:
             # short circuit the case where the two objects are identical so
