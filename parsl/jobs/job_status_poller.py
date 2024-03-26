@@ -40,10 +40,16 @@ class PolledExecutorFacade:
         return now >= self._last_poll_time + self._interval
 
     def poll(self, now: float) -> None:
+        previous_status = self.executor._poller_mutable_status
+
         if self._should_poll(now):
-            previous_status = self.executor._poller_mutable_status
             self.executor._poller_mutable_status = self._executor.status()
             self._last_poll_time = now
+
+        if previous_status != self.executor._poller_mutable_status:
+            # short circuit the case where the two objects are identical so
+            # delta_status must end up empty.
+
             delta_status = {}
             for block_id in self.executor._poller_mutable_status:
                 if block_id not in previous_status \
