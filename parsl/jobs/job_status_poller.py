@@ -57,14 +57,6 @@ class PolledExecutorFacade:
             self.hub_channel.send_pyobj((MessageType.BLOCK_INFO, msg))
 
     @property
-    def status(self) -> Dict[str, JobStatus]:
-        """Return the status of all jobs/blocks of the executor of this poller.
-
-        :return: a dictionary mapping block ids (in string) to job status
-        """
-        return self.executor.status()
-
-    @property
     def executor(self) -> BlockProviderExecutor:
         return self._executor
 
@@ -118,7 +110,7 @@ class JobStatusPoller(Timer):
 
     def _run_error_handlers(self, status: List[PolledExecutorFacade]) -> None:
         for es in status:
-            es.executor.handle_errors(es.status)
+            es.executor.handle_errors(es.executor.status())
 
     def _update_state(self) -> None:
         for item in self._executor_facades:
@@ -141,7 +133,7 @@ class JobStatusPoller(Timer):
                 # cancelling, but it is safe to be more, as the scaling
                 # code will cope with being asked to cancel more blocks
                 # than exist.
-                block_count = len(ef.status)
+                block_count = len(ef.executor.status())
                 ef.scale_in(block_count)
 
             else:  # and bad_state_is_set
